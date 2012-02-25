@@ -4,7 +4,7 @@ import functools
 import zlib
 
 
-from erlang.erltypes import Atom, Ref, Port, Pid, Fun
+from erlang.erltypes import Atom, Ref, Port, Pid, Fun, NewFun, ExpFun
 
 
 _PARSER_FUNS = {}
