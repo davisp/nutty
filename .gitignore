@@ -2,3 +2,4 @@
 /erl/nutty/ebin/*.beam
 /pkg/nutty.zip
 /pkg/nutty/
+/pkg/erlang/
