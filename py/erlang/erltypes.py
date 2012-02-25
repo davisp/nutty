@@ -8,6 +8,9 @@ class ErlType(object):
 
 
 class Atom(ErlType, str):
+    def __getattr__(self, name):
+        return Atom(name)
+
     def to_binary(self):
         if len(self) < 256:
             return chr(115) + chr(len(self)) + self
