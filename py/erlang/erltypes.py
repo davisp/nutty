@@ -1,10 +1,20 @@
 
+from erlang.serializer import serialize
+
+
 class ErlType(object):
-    pass
+    def to_binary(self):
+        raise NotImplementedError()
 
 
 class Atom(ErlType, str):
-    pass
+    def to_binary(self):
+        if len(self) < 256:
+            return chr(115) + chr(len(self)) + self
+        elif len(self) < 65536:
+            return chr(100) + struct.pack("!H", len(self)) + self
+        else:
+            raise ValueError("Atom value too long: %d" % len(self))
 
 
 class BitString(ErlType, str):
@@ -12,12 +22,24 @@ class BitString(ErlType, str):
         self._bits = n
         return self
 
+    def to_binary(self):
+        return chr(77) + struct.pack("!I", len(self)) + chr(self._bits) + self
+
 
 class Ref(ErlType):
     def __init__(self, node, id, creation):
         self.node = node
-        self.id = rid
+        self.id = id
         self.creation = creation
+
+    def to_binary(self):
+        return "".join([
+            chr(114),
+            struct.pack("!H", len(self.id) / 4),
+            serialize(self.node),
+            self.creation,
+            self.id
+        ])
 
 
 class Port(ErlType):
@@ -25,6 +47,14 @@ class Port(ErlType):
         self.node = node
         self.id = id
         self.creation = creation
+
+    def to_binary(self):
+        return "".join([
+            chr(102),
+            serialize(self.node),
+            self.id,
+            self.creation
+        ])
 
 
 class Pid(ErlType):
@@ -34,6 +64,14 @@ class Pid(ErlType):
         self.serial = serial
         self.creation = creation
 
+    def to_binary(self):
+        return "".join([
+            chr(103),
+            serialize(self.node),
+            self.serial,
+            self.creation
+        ])
+
 
 class Fun(ErlType):
     def __init__(self, pid, mod, idx, unq, free):
@@ -42,6 +80,17 @@ class Fun(ErlType):
         self.idx = idx
         self.unq = unq
         self.free = free
+
+    def to_binary(self):
+        ret = [
+            chr(117),
+            struct.pack("!I", len(self.free)),
+            serialize(self.pid),
+            serialize(self.mod),
+            serialize(self.idx),
+            serialize(self.unq)
+        ] + map(serialze, self.free)
+        return "".join(ret)
 
 
 class NewFun(ErlType):
@@ -55,6 +104,20 @@ class NewFun(ErlType):
         slef.pid = pid
         self.free = free
 
+    def to_binary(self):
+        ret = [
+            chr(self.arity),
+            self.uniq,
+            struct.pack("!I", self.idx),
+            struct.pack("!I", len(self.free)),
+            serialize(self.mod),
+            serialize(self.oldidx),
+            serialize(self.oldunq),
+            serialize(self.pid)
+        ] + map(serialize, self.free)
+        ret = "".join(ret)
+        return chr(112) + struct.pack("!I", len(ret) + 4) + ret
+
 
 class ExpFun(ErlType):
     def __init__(self, mod, fun, arity):
@@ -62,7 +125,16 @@ class ExpFun(ErlType):
         self.fun = fun
         self.arity = arity
 
+    def to_binary(self):
+        return "".join([
+            chr(113),
+            serialize(self.mod),
+            serialize(self.fun),
+            serialize(self.arity)
+        ])
+
 
 class Nil(ErlType):
-    pass
+    def to_binary(self):
+        return chr(106)
 
