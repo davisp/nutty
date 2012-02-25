@@ -14,5 +14,5 @@ erlang:
 	cp -r erl/nutty pkg/
 
 python:
-	cp -r py/nutty pkg/
+	cp -r py/* pkg/
 
