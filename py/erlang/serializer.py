@@ -1,6 +1,7 @@
 
 import decimal
 import functools
+import types
 
 
 from erltypes import ErlType, Atom, Ref, Port, Pid, Fun, NewFun, ExpFun
@@ -16,6 +17,12 @@ class treg(object):
         assert self.typ not in _SERIALIZER_FUNS
         _SERIALIZER_FUNS[self.typ] = fun
         return fun
+
+
+@treg(types.NoneType)
+def _none(val):
+    assert val is None
+    return Atom("nil").to_binary()
 
 
 @treg(bool)
