@@ -1,6 +1,6 @@
 
-import nutty.vm
+import erlang
 
 def main():
     print "This is python!"
-    nutty.vm.boot()
+    erlang.VM().boot()

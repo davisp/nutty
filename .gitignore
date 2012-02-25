@@ -1,4 +1,4 @@
-nutty
-erl/nutty/ebin/*.beam
-pkg/nutty.zip
-pkg/nutty/
+/nutty
+/erl/nutty/ebin/*.beam
+/pkg/nutty.zip
+/pkg/nutty/
