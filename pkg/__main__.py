@@ -1,4 +1,4 @@
-import nutty
+import nutty.main
 
 if __name__ == '__main__':
-    nutty.main()
+    nutty.main.run()
