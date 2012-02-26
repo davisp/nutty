@@ -1,4 +1,7 @@
 
+NOSE_REPO=https://github.com/nose-devs/nose.git
+NOSE_VERSION=release_1.1.2
+
 all: nutty
 
 nutty: combined
@@ -15,4 +18,7 @@ erlang:
 
 python:
 	cp -r py/* pkg/
-
+	mkdir -p tmp/
+	if [ ! -d tmp/nose ]; then cd tmp && git clone -q $(NOSE_REPO); fi
+	cd tmp/nose && git checkout -q $(NOSE_VERSION)
+	rm -rf pkg/nose && cp -r tmp/nose/nose pkg
