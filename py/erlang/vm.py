@@ -80,7 +80,7 @@ class VM(object):
             script = self.compile(script)
         if timeout is None:
             timeout = a.infinity
-        body = (a.run, timeout, Atom(modname), arg)
+        body = (a.run, timeout, a(modname), arg)
         return self.request(body)
 
     def request(self, body):
