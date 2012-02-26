@@ -1,5 +1,6 @@
+*.pyc
+*.beam
 /nutty
-/erl/nutty/ebin/*.beam
 /pkg/nose/
 /pkg/nutty.zip
 /pkg/nutty/

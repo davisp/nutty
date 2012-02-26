@@ -1,7 +1,16 @@
 
-import erlang
+import os
+import pkgutil
+import sys
+
+
+import nose.core
+
 
 def run():
-    print "This is python!"
-    vm = erlang.VM().boot()
-    print vm.call("erlang", "now", timeout=1000)
+    nose.core.run()
+
+
+def _nose_usage(cls):
+    return pkgutil.get_data("nose.core", "usage.txt")
+nose.core.TestProgram.usage = classmethod(_nose_usage)
