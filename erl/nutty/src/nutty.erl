@@ -89,7 +89,7 @@ scan(Source) ->
         {ok, Tokens, _} ->
             Tokens;
         Else ->
-            throw({error, Else})
+            throw(Else)
     end.
 
 
@@ -98,7 +98,7 @@ parse(Tokens) ->
         {ok, Forms} ->
             Forms;
         Else ->
-            throw({error, Else})
+            throw(Else)
     end.
 
 
@@ -107,6 +107,6 @@ compile(Forms) ->
         {ok, ModName, Beam} ->
             {ok, ModName, Beam};
         Else ->
-            throw({error, Else})
+            throw(Else)
     end.
 
