@@ -20,6 +20,14 @@ class VM(object):
         self.conn = None
         atexit.register(self.close)
 
+    def __enter__(self):
+        if self.conn is None:
+            self.boot()
+        return self
+
+    def __exit__(self, etype, evalue, trace):
+        self.close()
+
     def close(self):
         if self.pipe.returncode is None:
             os.kill(self.pipe.pid, signal.SIGKILL)
