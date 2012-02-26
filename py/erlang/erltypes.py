@@ -14,12 +14,6 @@ class AtomType(type):
 class Atom(ErlType, str):
     __metaclass__ = AtomType
 
-    def __str__(self):
-        return "a'" + self + "'"
-
-    def __repr__(self):
-        return "a'" + self + "'"
-
     def to_binary(self):
         if len(self) < 256:
             return chr(115) + chr(len(self)) + self
