@@ -29,11 +29,11 @@ handle(Conn, {call, Timeout,  Mod, Fun, Args}) ->
 handle(Conn, {compile, Mod, Source}) ->
     case code:is_loaded(Mod) of
         {file, _} ->
-            send(Conn, ok);
+            send(Conn, {resp, ok});
         false ->
-            case build(binary_to_list(Source)) of
-                ok -> send(Conn, ok);
-                Else -> send(Conn, Else)
+            case build(Mod, binary_to_list(Source)) of
+                ok -> send(Conn, {resp, ok});
+                Else -> send(Conn, {resp, Else})
             end
     end;
 handle(Conn, {run, Timeout, Mod, Arg}) ->
@@ -72,41 +72,12 @@ run(Conn, Timeout, Fun) ->
     end.
 
 
-build(Source) ->
+build(Mod, Source) ->
     try
-        {ok, Mod, Bin} = compile(parse(scan(Source))),
-        code:purge(Mod),
-        code:load_binary(Mod, atom_to_list(Mod) ++ ".erl", Bin),
+        {module, Mod} = nutty_dynamic_compile:load_from_string(Source),
         ok
     catch
         throw:Error -> Error;
         Type:Error -> {Type, Error}
-    end.
-
-
-scan(Source) ->
-    case (catch erl_scan:string(Source)) of
-        {ok, Tokens, _} ->
-            Tokens;
-        Else ->
-            throw(Else)
-    end.
-
-
-parse(Tokens) ->
-    case (catch erl_parse:parse_exprs(Tokens)) of
-        {ok, Forms} ->
-            Forms;
-        Else ->
-            throw(Else)
-    end.
-
-
-compile(Forms) ->
-    case compile:forms(Forms) of
-        {ok, ModName, Beam} ->
-            {ok, ModName, Beam};
-        Else ->
-            throw(Else)
     end.
 

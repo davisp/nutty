@@ -4,6 +4,7 @@
     {registered, []},
     {applications, [kernel]},
     {modules, [
-        nutty
+        nutty,
+        nutty_dynamic_compile
     ]}
 ]}.

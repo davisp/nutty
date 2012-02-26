@@ -80,7 +80,7 @@ class VM(object):
             script = self.compile(script)
         if timeout is None:
             timeout = a.infinity
-        body = (a.run, timeout, a(modname), arg)
+        body = (a.run, timeout, a(script), arg)
         return self.request(body)
 
     def request(self, body):
@@ -95,7 +95,12 @@ class VM(object):
         while size > 0:
             ret.append(self.conn.recv(size))
             size -= len(ret[-1])
-        return erlang.parse("".join(ret))
+        ret = erlang.parse("".join(ret))
+        if ret == a.timeout:
+            raise RuntimeError("Timeout executing request")
+        print ret
+        assert ret[0] == a.resp
+        return ret[1]
 
 
 def find_escript():
