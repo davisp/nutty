@@ -29,8 +29,18 @@ class VM(object):
         self.close()
 
     def close(self):
-        if self.pipe.returncode is None:
-            os.kill(self.pipe.pid, signal.SIGKILL)
+        if self.conn:
+            try:
+                self.conn.close()
+            except:
+                pass
+        if self.pipe and self.pipe.returncode is None:
+            try:
+                os.kill(self.pipe.pid, signal.SIGKILL)
+            except:
+                pass
+        self.pipe = None
+        self.conn = None
 
     def boot(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
