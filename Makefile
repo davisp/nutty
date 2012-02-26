@@ -5,7 +5,7 @@ NOSE_VERSION=release_1.1.2
 all: nutty
 
 check: nutty
-	./nutty -v
+	./nutty -v --failed
 
 nutty: combined
 	cd ./pkg && zip -q -r nutty .

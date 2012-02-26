@@ -1,8 +1,13 @@
+import functools
+
+
 import t
 import h
 
+
 import erlang
 a = erlang.Atom
+
 
 @h.vm()
 def test_basic(vm):
@@ -51,5 +56,7 @@ def test_parser():
     with erlang.VM() as vm:
         for (e, p) in DATA:
             script = "main(_) -> %s." % e
-            yield check_parser, vm, script, p
+            p = functools.partial(check_parser, vm, script, p)
+            p.description = "test_parser %s" % e
+            yield (p,)
 

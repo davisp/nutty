@@ -1,5 +1,6 @@
 *.pyc
 *.beam
+.noseids
 /nutty
 /pkg/nose/
 /pkg/nutty.zip
