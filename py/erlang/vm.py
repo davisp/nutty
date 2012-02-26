@@ -1,5 +1,9 @@
 
+import atexit
+import os
+import signal
 import socket
+import struct
 import subprocess as sp
 import sys
 
@@ -10,7 +14,13 @@ a = erlang.Atom
 
 class VM(object):
     def __init__(self):
-        self.booted = False
+        self.pipe = None
+        self.conn = None
+        atexit.register(self.close)
+
+    def close(self):
+        if self.pipe.returncode is None:
+            os.kill(self.pipe.pid, signal.SIGKILL)
 
     def boot(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,22 +28,27 @@ class VM(object):
         sock.bind(("127.0.0.1", 0))
         sock.listen(1)
         port = sock.getsockname()[1]
-        cmd = ["escript", sys.argv[0], "--port", str(port)]
-        self.pipe = sp.Popen(" ".join(cmd), shell=True)
+        cmd = [find_escript(), sys.argv[0], "--port", str(port)]
+        self.pipe = sp.Popen(cmd)
         self.conn, _ = sock.accept()
+        self.conn.setblocking(True)
         sock.close()
-        self.booted = True
+        return self
 
-    def call(self, mod, fun, args, timeout=None):
+    def call(self, mod, fun, args=None, timeout=None):
+        if args is None:
+            args = []
+        elif not isinstance(args, list):
+            args = [args]
         if timeout is None:
             timeout = a.infinity
-        body = tuple(a.call, timeout, a(mod), a(fun), args)
+        body = (a.call, timeout, a(mod), a(fun), args)
         return self.request(body)
 
     def compile(self, script):
         modname = "nutty_" + hashlibg.sha1(script).hexdigest().upper()
         script = "-module(%s).\n-export([main/0]).\n\n" + script
-        body = tuple(a.compile, Atom(modname), script)
+        body = (a.compile, Atom(modname), script)
         resp = self.request(body)
         if resp != a.ok:
             raise ValueError("Error compiling script: %s" % resp)
@@ -44,7 +59,7 @@ class VM(object):
             script = self.compile(script)
         if timeout is None:
             timeout = a.infinity
-        body = tuple(a.run, timeout, Atom(modname), arg)
+        body = (a.run, timeout, Atom(modname), arg)
         return self.request(body)
 
     def request(self, body):
@@ -53,10 +68,20 @@ class VM(object):
         self.conn.sendall(data)
         buf = ""
         while len(buf) < 4:
-            self.conn.recv(4 - len(buf))
+            buf += self.conn.recv(4 - len(buf))
         size = struct.unpack("!I", buf)[0]
         ret = []
         while size > 0:
             ret.append(self.conn.recv(size))
             size -= len(ret[-1])
-        return "".join(ret)
+        return erlang.parse("".join(ret))
+
+
+def find_escript():
+    def is_exe(fn):
+        return os.path.exists(fn) and os.access(fn, os.X_OK)
+    for path in os.environ["PATH"].split(os.pathsep):
+        fn = os.path.join(path, "escript")
+        if is_exe(fn):
+            return fn
+

@@ -1,6 +1,7 @@
 
 import decimal
 import functools
+import struct
 import zlib
 
 
@@ -50,10 +51,11 @@ class ulen(object):
             elif self.val == 4:
                 length = struct.unpack("!I", data[:4])[0]
                 data = data[4:]
-            if len(data) != length + self.extra:
-                raise ValueError("Invalid length: %d" % length)
-            fun(length, data)
-        return _wraped
+            if len(data) < length + self.extra:
+                args = fun.func_name, length
+                raise ValueError("Invalid length: %s :: %d" % args)
+            return fun(length, data)
+        return _wrapped
 
 
 @tag(70)
@@ -267,17 +269,16 @@ def _parse(data):
     fun = _PARSER_FUNS.get(tag)
     if fun is None:
         raise ValueError("Invalid element tag: %d" % tag)
-    ret, tail = fun(data[1:])
-    if len(tail) != 0:
-        raise ValueError("Trailing garbage bytes: %d" % len(tail))
-    return ret
+    return fun(data[1:])
 
 
 def parse(data):
     if ord(data[0]) != 131:
         raise ValueError("Invalid magic byte: %d" % ord(data[0]))
     if ord(data[1]) == 80:
-        return _parse(zlib.decompress(data[6:]))
+        ret, tail = _parse(zlib.decompress(data[6:]))
     else:
-        return _parse(data[1:])
-
+        ret, tail =  _parse(data[1:])
+    if len(tail) != 0:
+        raise ValueError("Trailing garbage bytes: %d" % len(tail))
+    return ret

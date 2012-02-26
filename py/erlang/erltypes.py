@@ -1,15 +1,24 @@
 
-from erlang.serializer import serialize
-
+import erlang
 
 class ErlType(object):
     def to_binary(self):
         raise NotImplementedError()
 
 
+class AtomType(type):
+    def __getattr__(cls, key):
+        return cls(key)
+
+
 class Atom(ErlType, str):
-    def __getattr__(self, name):
-        return Atom(name)
+    __metaclass__ = AtomType
+
+    def __str__(self):
+        return "a'" + self + "'"
+
+    def __repr__(self):
+        return "a'" + self + "'"
 
     def to_binary(self):
         if len(self) < 256:
@@ -39,7 +48,7 @@ class Ref(ErlType):
         return "".join([
             chr(114),
             struct.pack("!H", len(self.id) / 4),
-            serialize(self.node),
+            erlang.serialize(self.node),
             self.creation,
             self.id
         ])
@@ -54,7 +63,7 @@ class Port(ErlType):
     def to_binary(self):
         return "".join([
             chr(102),
-            serialize(self.node),
+            erlang.serialize(self.node),
             self.id,
             self.creation
         ])
@@ -70,7 +79,7 @@ class Pid(ErlType):
     def to_binary(self):
         return "".join([
             chr(103),
-            serialize(self.node),
+            erlang.serialize(self.node),
             self.serial,
             self.creation
         ])
@@ -88,10 +97,10 @@ class Fun(ErlType):
         ret = [
             chr(117),
             struct.pack("!I", len(self.free)),
-            serialize(self.pid),
-            serialize(self.mod),
-            serialize(self.idx),
-            serialize(self.unq)
+            erlang.serialize(self.pid),
+            erlang.serialize(self.mod),
+            erlang.serialize(self.idx),
+            erlang.serialize(self.unq)
         ] + map(serialze, self.free)
         return "".join(ret)
 
@@ -113,11 +122,11 @@ class NewFun(ErlType):
             self.uniq,
             struct.pack("!I", self.idx),
             struct.pack("!I", len(self.free)),
-            serialize(self.mod),
-            serialize(self.oldidx),
-            serialize(self.oldunq),
-            serialize(self.pid)
-        ] + map(serialize, self.free)
+            erlang.serialize(self.mod),
+            erlang.serialize(self.oldidx),
+            erlang.serialize(self.oldunq),
+            erlang.serialize(self.pid)
+        ] + map(erlang.serialize, self.free)
         ret = "".join(ret)
         return chr(112) + struct.pack("!I", len(ret) + 4) + ret
 
@@ -131,9 +140,9 @@ class ExpFun(ErlType):
     def to_binary(self):
         return "".join([
             chr(113),
-            serialize(self.mod),
-            serialize(self.fun),
-            serialize(self.arity)
+            erlang.serialize(self.mod),
+            erlang.serialize(self.fun),
+            erlang.serialize(self.arity)
         ])
 
 

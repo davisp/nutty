@@ -1,6 +1,7 @@
 
 import decimal
 import functools
+import struct
 import types
 
 
@@ -80,12 +81,9 @@ def _dict(val):
     return _list(val.items())
 
 
-@treg(ErlType)
-def _etype(val):
-    return val.to_binary()
-
-
 def serialize(val):
+    if isinstance(val, ErlType):
+        return val.to_binary()
     fun = _SERIALIZER_FUNS.get(type(val))
     if not fun:
         raise TypeError("Unable to serialize %s" % type(val))
