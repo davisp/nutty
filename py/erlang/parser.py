@@ -5,7 +5,7 @@ import struct
 import zlib
 
 
-from erlang.erltypes import Atom, Ref, Port, Pid, Fun, NewFun, ExpFun
+from erlang.erltypes import Atom, Ref, Port, Pid, Fun, NewFun, ExpFun, Nil
 
 
 _PARSER_FUNS = {}
