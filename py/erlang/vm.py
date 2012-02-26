@@ -20,6 +20,9 @@ class VM(object):
         self.conn = None
         atexit.register(self.close)
 
+    def __repr__(self):
+        return "<VM %s>" % id(self)
+
     def __enter__(self):
         if self.conn is None:
             self.boot()
@@ -51,7 +54,7 @@ class VM(object):
         cmd = [find_escript(), sys.argv[0], "--port", str(port)]
         self.pipe = sp.Popen(cmd)
         self.conn, _ = sock.accept()
-        self.conn.setblocking(True)
+        self.conn.setblocking(1)
         sock.close()
         return self
 
@@ -68,7 +71,7 @@ class VM(object):
     def compile(self, script):
         script = textwrap.dedent(script.lstrip("\n"))
         modname = "nutty_" + hashlib.sha1(script).hexdigest().upper()
-        script = "-module(%s).\n-export([main/1]).\n\n%s" % (modname, script)
+        script = "-module(%s).\n-export([main/1]).\n\n%s\n" % (modname, script)
         body = (a.compile, a(modname), script)
         resp = self.request(body)
         if resp != a.ok:
@@ -98,7 +101,6 @@ class VM(object):
         ret = erlang.parse("".join(ret))
         if ret == a.timeout:
             raise RuntimeError("Timeout executing request")
-        print ret
         assert ret[0] == a.resp
         return ret[1]
 

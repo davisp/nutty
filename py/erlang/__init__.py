@@ -11,6 +11,8 @@ def parse(data):
     return erlang.parser.parse(data)
 
 
-def serialize(term):
+def serialize(term, include_magic=True):
     ret = erlang.serializer.serialize(term)
+    if not include_magic:
+        return ret
     return chr(131) + ret

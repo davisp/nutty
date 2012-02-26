@@ -5,7 +5,8 @@ import struct
 import zlib
 
 
-from erlang.erltypes import Atom, Ref, Port, Pid, Fun, NewFun, ExpFun, Nil
+from erlang.erltypes import Atom, BitString, Ref, Port, Pid, \
+                                Fun, NewFun, ExpFun, Nil
 
 
 _PARSER_FUNS = {}
@@ -61,7 +62,7 @@ class ulen(object):
 @tag(70)
 @dlen(8)
 def _new_float(data):
-    ret = struct.unpack("d", data[:8])[0]
+    ret = struct.unpack("!d", data[:8])[0]
     return ret, data[8:]
 
 
@@ -69,7 +70,7 @@ def _new_float(data):
 @ulen(4, 1)
 def _bitstring(length, data):
     ret = BitString(data[1:length]).bits(length)
-    return ret, data[length:]
+    return ret, data[length+1:]
 
 
 @tag(97)
@@ -114,18 +115,18 @@ def _port(data):
         raise TypeError("Invalid node decoded")
     if len(rest) < 5:
         raise ValueError("Insufficient data: %d" % len(rest))
-    return Port(node, ret[:4], ret[4]), rest[5:]
+    return Port(node, rest[:4], rest[4]), rest[5:]
 
 
 @tag(103)
 def _pid(data):
-    node, rest = _parse(data)
+    node, data = _parse(data)
     if not isinstance(node, Atom):
         raise TypeError("Invalid node decoded")
-    if len(rest) < 9:
-        raise ValueError("Insufficient data: %d" % len(rest))
-    ret = Pid(node, rest[:4], rest[4:8], rest[8])
-    return ret, rest[9:]
+    if len(data) < 9:
+        raise ValueError("Insufficient data: %d" % len(data))
+    ret = Pid(node, data[:4], data[4:8], data[8])
+    return ret, data[9:]
 
 
 @tag(104)
@@ -236,12 +237,13 @@ def _export(data):
 @tag(114)
 def _new_ref(data):
     length = struct.unpack("!H", data[:2])[0]
-    data = data[2:]
-    node, rest = _parse(data)
-    if len(rest) < 1 + (4 * length):
-        raise ValueError("Insufficient data: %d" % len(rest))
-    ret = Ref(node, rest[1:(4 * length)], rest[0])
-    return ret, rest[1 + (4 * length):]
+    node, data = _parse(data[2:])
+    if len(data) < 1 + (4 * length):
+        raise ValueError("Insufficient data: %d" % len(data))
+    if len(data[1:]) / 4 != length:
+        raise ValueError("Missing ref info")
+    ret = Ref(node, data[1:], data[0])
+    return ret, data[1 + (4 * length):]
 
 
 @tag(115)

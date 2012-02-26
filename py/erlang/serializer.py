@@ -47,7 +47,7 @@ def _int(val):
 
 @treg(float)
 def _float(val):
-    return chr(70) + struct.pack("d", val)
+    return chr(70) + struct.pack("!d", val)
 
 
 @treg(str)
