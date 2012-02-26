@@ -7,6 +7,7 @@ import socket
 import struct
 import subprocess as sp
 import sys
+import textwrap
 
 
 import erlang
@@ -47,12 +48,13 @@ class VM(object):
         return self.request(body)
 
     def compile(self, script):
-        modname = "nutty_" + hashlibg.sha1(script).hexdigest().upper()
-        script = "-module(%s).\n-export([main/0]).\n\n" + script
-        body = (a.compile, Atom(modname), script)
+        script = textwrap.dedent(script.lstrip("\n"))
+        modname = "nutty_" + hashlib.sha1(script).hexdigest().upper()
+        script = "-module(%s).\n-export([main/1]).\n\n%s" % (modname, script)
+        body = (a.compile, a(modname), script)
         resp = self.request(body)
         if resp != a.ok:
-            raise ValueError("Error compiling script: %s" % resp)
+            raise ValueError("Error compiling script: %s" % (resp,))
         return modname
 
     def run(self, script, arg=None, timeout=None):
